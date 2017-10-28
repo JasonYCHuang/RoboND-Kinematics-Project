@@ -139,18 +139,30 @@ WC = EE - (d7) * ROT_EE[:, 2]
 
 ![alt text][theta23]
 
-With `theta1`, `theta2` and `theta3`, we can get a `R3_6` rotation matrix containing only `theta4`, `theta5` and `theta6`, and hence retrieve them as we did in __Euler Angles from a Rotation Matrix__.
+With `theta1`, `theta2` and `theta3`, we can reduce `R0_6` to `R3_6` by decomposing `theta1~3`. Now, `R3_6` rotation matrix contains only `theta4`, `theta5` and `theta6`. Hence we can retrieve them as we did in __Euler Angles from a Rotation Matrix__.
 
 ```
 R3_6 = R0_3.inv("LU") * ROT_EE
 ```
 
+```
+T3_6 = T3_4 * T4_5 * T5_6 = Matrix([
+[-sin(q4)*sin(q6) + cos(q4)*cos(q5)*cos(q6), -sin(q4)*cos(q6) - sin(q6)*cos(q4)*cos(q5), -sin(q5)*cos(q4), -0.054],
+[                           sin(q5)*cos(q6),                           -sin(q5)*sin(q6),          cos(q5),    1.5],
+[-sin(q4)*cos(q5)*cos(q6) - sin(q6)*cos(q4),  sin(q4)*sin(q6)*cos(q5) - cos(q4)*cos(q6),  sin(q4)*sin(q5),      0],
+[                                         0,                                          0,                0,      1]])
 
+R3_6 = T3_6[0:2, 0:2]
+```
 
+These 3 angles can be solved by:
 
-
-
-
+```
+# Euler angles from rotation matrix
+theta4 = atan2(R3_6[2,2], - R3_6[0,2])
+theta5 = atan2(sqrt(R3_6[0,2] * R3_6[0,2] + R3_6[2,2] * R3_6[2,2]), R3_6[1,2])
+theta6 = atan2(-R3_6[1,1], R3_6[1,0])
+```
 
 ### Project Implementation
 
@@ -163,8 +175,14 @@ Here is a result. Base on `IK_server.py`, the arm can achieve 8/10 success.
 
 ![alt text][pick_gazebo]
 
-During the simulation, the arm has reduantant rotations, and the motion path is inefficient. The following picture is one example. A future work is to improve the motion planning. (Could you give me a hint to solve this?)
+During the simulation, the arm has reduantant rotations, and the motion path is inefficient. The following picture is one example. 
+
+### Future work
+
+#### 1.Improve the motion planning, and reduce redundant rotation and movement.
 
 ![alt text][rviz_inefficient]
 
+The reviewer suggests: https://udacity-robotics.slack.com/archives/C5HUQ0HB9/p1499136717183191
 
+#### 2. Test whether `numpy` can speed up calculations.
